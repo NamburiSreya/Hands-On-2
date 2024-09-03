@@ -1,40 +1,29 @@
-import timeit
-import platform as machine
-import psutil as system_info
-import random as chance
-import matplotlib.pyplot as plt
+import timeit as chronometer
+import platform as sys_platform
+import psutil as sys_monitor
+import random as randomizer
+import matplotlib.pyplot as vis
 
-# Machine Specifications
-def fetch_processor():
-    return f"Processor: {machine.processor()}"
+# Hardware Diagnostics
+def cpu_info():
+    return f"Processor: {sys_platform.processor()}"
 
-def fetch_memory():
-    mem = system_info.virtual_memory()
-    return f"Total Memory: {mem.total // (1024**3)} GB"
+def memory_status():
+    mem = sys_monitor.virtual_memory()
+    return f"Available Memory: {mem.available / (1024**3):.2f} GB"
 
-def fetch_disk_space():
-    disks = system_info.disk_partitions()
-    space_info = []
-    for disk in disks:
-        usage = system_info.disk_usage(disk.mountpoint)
-        space_info.append(f"{disk.device} - Capacity: {usage.total // (1024**3)} GB, Available: {usage.free // (1024**3)} GB")
-    return space_info
+def storage_details():
+    drives = sys_monitor.disk_partitions()
+    storage = []
+    for drive in drives:
+        usage = sys_monitor.disk_usage(drive.mountpoint)
+        storage.append(f"{drive.device} - Capacity: {usage.total / (1024**3):.2f} GB, Free: {usage.free / (1024**3):.2f} GB")
+    return storage
 
-def fetch_os():
-    return f"Operating System: {machine.system()} {machine.release()}"
+def os_info():
+    return f"Operating System: {sys_platform.system()} {sys_platform.version()}"
 
-# Quick Sort
-def quick_sort(data):
-    if len(data) <= 1:
-        return data
-    else:
-        pivot = data[len(data) // 2]
-        left = [x for x in data if x < pivot]
-        middle = [x for x in data if x == pivot]
-        right = [x for x in data if x > pivot]
-        return quick_sort(left) + middle + quick_sort(right)
-
-# Insertion Sort
+# Sorting Algorithms
 def insertion_sort(data):
     for i in range(1, len(data)):
         key = data[i]
@@ -43,69 +32,69 @@ def insertion_sort(data):
             data[j + 1] = data[j]
             j -= 1
         data[j + 1] = key
-    return data
 
-# Selection Sort
 def selection_sort(data):
     for i in range(len(data)):
         min_idx = i
-        for j in range(i + 1, len(data)):
-            if data[min_idx] > data[j]:
+        for j in range(i+1, len(data)):
+            if data[j] < data[min_idx]:
                 min_idx = j
         data[i], data[min_idx] = data[min_idx], data[i]
-    return data
 
-# Generate random dataset
-def create_dataset(size):
-    return [chance.randint(1, 5000) for _ in range(size)]
+def bubble_sort(data):
+    n = len(data)
+    for i in range(n):
+        for j in range(0, n-i-1):
+            if data[j] > data[j+1]:
+                data[j], data[j+1] = data[j+1], data[j]
 
-# Measure algorithm performance
-def measure_performance(sort_algo, dataset):
-    setup = f"from __main__ import {sort_algo}, create_dataset; data = create_dataset({len(dataset)})"
-    command = f"{sort_algo}(data)"
-    execution_time = timeit.timeit(command, setup=setup, number=5)
+# Utility Functions
+def generate_dataset(size):
+    return [randomizer.randint(1, 5000) for _ in range(size)]
+
+def measure_performance(algorithm, dataset):
+    setup = f"from __main__ import {algorithm}, generate_dataset; data = generate_dataset({len(dataset)})"
+    stmt = f"{algorithm}(data)"
+    execution_time = chronometer.timeit(stmt, setup=setup, number=5)
     return execution_time
 
-# Test parameters with starting sizes
+# Benchmark Configuration
 dataset_sizes = [5, 10, 20, 50, 100, 200, 500, 1000, 2000]
 
-# Store performance results
-performance_data = {'Quick Sort': [], 'Insertion Sort': [], 'Selection Sort': []}
+# Performance Tracking
+algorithm_performance = {
+    'Insertion Sort': [],
+    'Selection Sort': [],
+    'Bubble Sort': []
+}
 
-# Conduct performance tests
+# Benchmark Execution
 for size in dataset_sizes:
-    dataset = create_dataset(size)
+    dataset = generate_dataset(size)
 
-    # Quick Sort
-    quick_time = measure_performance('quick_sort', dataset)
-    performance_data['Quick Sort'].append(quick_time)
+    for algo in ['insertion_sort', 'selection_sort', 'bubble_sort']:
+        perf_time = measure_performance(algo, dataset)
+        algorithm_performance[algo.replace('_', ' ').title()].append(perf_time)
 
-    # Insertion Sort
-    insertion_time = measure_performance('insertion_sort', dataset)
-    performance_data['Insertion Sort'].append(insertion_time)
+# System Diagnostics Output
+print("System Diagnostics:")
+print(cpu_info())
+print(memory_status())
+print(os_info())
 
-    # Selection Sort
-    selection_time = measure_performance('selection_sort', dataset)
-    performance_data['Selection Sort'].append(selection_time)
+print("\nStorage Overview:")
+print('\n'.join(storage_details()))
 
-# Display machine specifications
-print("Machine Specifications:")
-print(fetch_processor())
-print(fetch_memory())
-print(fetch_os())
+# Visualization
+vis.figure(figsize=(12, 7))
+for algo, times in algorithm_performance.items():
+    vis.plot(dataset_sizes, times, label=algo, marker='o')
 
-print("\nStorage Details:")
-print('\n'.join(fetch_disk_space()))
-
-# Visualize performance results
-plt.figure(figsize=(10, 6))
-plt.plot(dataset_sizes, performance_data['Quick Sort'], label='Quick Sort', marker='o')
-plt.plot(dataset_sizes, performance_data['Insertion Sort'], label='Insertion Sort', marker='s')
-plt.plot(dataset_sizes, performance_data['Selection Sort'], label='Selection Sort', marker='^')
-
-plt.xlabel('Dataset Size')
-plt.ylabel('Execution Duration (seconds)')
-plt.title('Sorting Algorithm Performance Comparison')
-plt.legend()
-plt.grid(True)
-plt.show()
+vis.xlabel('Dataset Dimension')
+vis.ylabel('Execution Duration (seconds)')
+vis.title('Sorting Algorithm Efficiency Analysis')
+vis.legend()
+vis.grid(True)
+vis.xscale('log')
+vis.yscale('log')
+vis.show()
